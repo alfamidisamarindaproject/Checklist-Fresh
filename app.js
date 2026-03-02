@@ -1,120 +1,136 @@
-// GANTI DENGAN URL APPS SCRIPT ANDA
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoz-Nw43oPupfnTxDvE5CQ4lqzZNPGfssmvuNMxkTu6rJwONMKDx5dhbCQ-iBAX0n9/exec'; 
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoz-Nw43oPupfnTxDvE5CQ4lqzZNPGfssmvuNMxkTu6rJwONMKDx5dhbCQ-iBAX0n9/exec'; // Ganti dengan URL Google Apps Script
 
-const photoInput = document.getElementById('photoInput');
-const imagePreview = document.getElementById('imagePreview');
-const previewWrapper = document.getElementById('previewWrapper');
-const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-const imageContainer = document.getElementById('imageContainer');
-const submitBtn = document.getElementById('submitBtn');
-let currentStatus = "Belum Dipilih";
+const fileInput = document.getElementById('file-input');
+const cameraTrigger = document.getElementById('camera-trigger');
+const previewImg = document.getElementById('preview-img');
+const imageWrapper = document.getElementById('image-wrapper');
+const placeholderUI = document.getElementById('placeholder-ui');
+const instructionTap = document.getElementById('instruction-tap');
+const btnSubmit = document.getElementById('btn-submit');
+const fillProgress = document.getElementById('fill-progress');
+
 let markers = [];
 
-// 1. Handling Upload & Preview
-photoInput.addEventListener('change', function(e) {
-    const file = e.target.files[0];
+// 1. Trigger Kamera
+cameraTrigger.addEventListener('click', (e) => {
+    if (!previewImg.src || previewImg.src.includes('window')) {
+        fileInput.click();
+    } else {
+        // Jika foto sudah ada, fungsi klik adalah untuk memberi tanda
+        addMarker(e);
+    }
+});
+
+// 2. Handle Foto Masuk
+fileInput.addEventListener('change', function() {
+    const file = this.files[0];
     if (file) {
         const reader = new FileReader();
-        reader.onload = function(event) {
-            imagePreview.src = event.target.result;
-            previewWrapper.classList.remove('hidden');
-            uploadPlaceholder.classList.add('hidden');
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            placeholderUI.style.display = 'none';
+            imageWrapper.style.display = 'block';
+            instructionTap.style.display = 'block';
+            cameraTrigger.style.border = 'none';
+            updateProgress();
         }
         reader.readAsDataURL(file);
     }
 });
 
-// 2. Fitur Tap to Mark (Menandai buah tidak layak)
-imageContainer.addEventListener('click', function(e) {
-    const rect = imageContainer.getBoundingClientRect();
+// 3. Tambah Tanda Tidak Layak (X)
+function addMarker(e) {
+    const rect = cameraTrigger.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-    // Tambah Marker Secara Visual
     const marker = document.createElement('div');
-    marker.className = 'tap-marker';
+    marker.className = 'marker';
     marker.style.left = x + '%';
     marker.style.top = y + '%';
     marker.innerHTML = '✕';
-    imageContainer.appendChild(marker);
-    
-    markers.push({x, y});
-    
-    // Auto-set status ke Tidak Layak jika ada tanda
-    setStatus('Tidak Layak');
-});
+    imageWrapper.appendChild(marker);
 
-// 3. Status Switcher UI
-function setStatus(status) {
-    currentStatus = status;
-    const btnL = document.getElementById('btnLayak');
-    const btnTL = document.getElementById('btnTidakLayak');
-
-    if(status === 'Layak') {
-        btnL.className = 'flex-1 py-3 rounded-2xl bg-green-500 border-green-500 text-white font-bold transition-all';
-        btnTL.className = 'flex-1 py-3 rounded-2xl border-2 border-gray-100 font-bold text-gray-400 transition-all';
-    } else {
-        btnTL.className = 'flex-1 py-3 rounded-2xl bg-red-600 border-red-600 text-white font-bold transition-all';
-        btnL.className = 'flex-1 py-3 rounded-2xl border-2 border-gray-100 font-bold text-gray-400 transition-all';
-    }
+    markers.push({ x, y });
+    updateProgress();
 }
 
-// 4. Submit Data
-document.getElementById('mainForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+// 4. Update Progress Bar & Validasi Button
+function updateProgress() {
+    let score = 0;
+    if (document.getElementById('toko').value) score += 25;
+    if (document.getElementById('pic').value) score += 25;
+    if (previewImg.src && previewImg.src.length > 100) score += 50;
     
-    // Gabungkan gambar asli dengan marker menggunakan Canvas sebelum kirim
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = "Sedang Mengirim...";
+    fillProgress.style.width = score + '%';
+    btnSubmit.disabled = score < 100;
+}
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = imagePreview.naturalWidth;
-    canvas.height = imagePreview.naturalHeight;
-    
-    ctx.drawImage(imagePreview, 0, 0);
-    
-    // Gambar semua marker ke canvas agar tersimpan di Drive
-    ctx.fillStyle = "red";
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = canvas.width * 0.005;
-    const radius = canvas.width * 0.02;
+// Listen to inputs for progress
+document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', updateProgress);
+});
 
-    markers.forEach(m => {
-        const realX = (m.x / 100) * canvas.width;
-        const realY = (m.y / 100) * canvas.height;
-        
-        ctx.beginPath();
-        ctx.arc(realX, realY, radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+// 5. Submit Laporan
+btnSubmit.addEventListener('click', async () => {
+    Swal.fire({
+        title: 'Mengirim Laporan...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
     });
 
-    const finalImage = canvas.toDataURL('image/jpeg', 0.6);
+    const canvas = document.getElementById('canvas-hidden');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size to image original size
+    canvas.width = previewImg.naturalWidth;
+    canvas.height = previewImg.naturalHeight;
+    ctx.drawImage(previewImg, 0, 0);
+
+    // Draw Markers on Final Image
+    ctx.fillStyle = "#ED1C24";
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = canvas.width * 0.01;
+    const fontS = canvas.width * 0.05;
+    ctx.font = `bold ${fontS}px Arial`;
+
+    markers.forEach(m => {
+        const posX = (m.x / 100) * canvas.width;
+        const posY = (m.y / 100) * canvas.height;
+        
+        // Draw Circle
+        ctx.beginPath();
+        ctx.arc(posX, posY, fontS, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Draw X
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+        ctx.fillText("X", posX, posY + (fontS/3));
+        ctx.fillStyle = "#ED1C24"; // reset
+    });
+
+    const finalImageData = canvas.toDataURL('image/jpeg', 0.7);
 
     const payload = {
         toko: document.getElementById('toko').value,
         pic: document.getElementById('pic').value,
         catatan: document.getElementById('catatan').value,
-        status: currentStatus,
-        imageBase64: finalImage
+        foto: finalImageData,
+        jumlah_temuan: markers.length
     };
 
     try {
-        const resp = await fetch(SCRIPT_URL, {
+        const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors', // Penting untuk Apps Script
             body: JSON.stringify(payload)
         });
-        alert('Laporan Terkirim! Terima kasih.');
-        location.reload();
-    } catch (err) {
-        alert('Gagal mengirim laporan. Cek koneksi Anda.');
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = "KIRIM LAPORAN SEKARANG";
+        
+        Swal.fire('Berhasil!', 'Laporan monitoring telah terkirim.', 'success')
+            .then(() => location.reload());
+            
+    } catch (error) {
+        Swal.fire('Error', 'Gagal terhubung ke server.', 'error');
     }
-});
-
-document.getElementById('resetPhoto').addEventListener('click', () => {
-    location.reload();
 });
