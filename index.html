@@ -14,8 +14,8 @@
 
         :root {
             --bg: #F2F2F7;
-            --primary: #ED1C24; /* Alfamidi Red */
-            --accent: #FFCC00; /* Alfamidi Yellow */
+            --primary: #ED1C24;
+            --accent: #FFCC00;
             --surface: rgba(255, 255, 255, 0.85);
             --text-main: #1C1C1E;
             --text-sub: #8E8E93;
@@ -31,35 +31,15 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        .header-nav {
-            padding: 40px 24px 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .brand {
-            font-weight: 800;
-            font-size: 1.2rem;
-            letter-spacing: -0.5px;
-            color: var(--primary);
-        }
-
+        .header-nav { padding: 40px 24px 10px; display: flex; justify-content: space-between; align-items: center; }
+        .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); }
         .brand span { color: var(--text-main); }
 
-        /* Progress Section */
         .progress-container { padding: 0 24px; margin-bottom: 25px; }
         .progress-bar-custom { height: 6px; background: #E5E5EA; border-radius: 10px; overflow: hidden; }
         #fill-progress { width: 0%; height: 100%; background: var(--primary); transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .section-title {
-            font-size: 0.7rem;
-            font-weight: 800;
-            color: var(--text-sub);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin: 30px 0 12px 28px;
-        }
+        .section-title { font-size: 0.7rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1.5px; margin: 30px 0 12px 28px; }
 
         .glass-card {
             background: var(--surface);
@@ -72,23 +52,24 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.03);
         }
 
-        /* Input Styling */
-        .input-group-modern { margin-bottom: 20px; }
-        .input-group-modern label { font-size: 0.75rem; font-weight: 700; margin-bottom: 6px; display: block; color: var(--text-sub); padding-left: 4px; }
-        .input-group-modern input, .input-group-modern select {
-            width: 100%;
-            padding: 16px 20px;
-            border-radius: var(--radius-md);
-            border: 1.5px solid transparent;
+        /* Checklist Grid */
+        .task-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .task-card {
             background: rgba(0,0,0,0.04);
-            font-weight: 700;
-            font-size: 0.95rem;
-            transition: 0.3s;
+            border-radius: var(--radius-md);
+            padding: 15px 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 2px solid transparent;
         }
+        .task-card i { font-size: 1.5rem; margin-bottom: 8px; display: block; color: var(--text-sub); }
+        .task-card span { font-size: 0.65rem; font-weight: 800; }
+        .task-input { display: none; }
+        .task-input:checked + .task-card { background: #FFF; border-color: var(--primary); color: var(--primary); box-shadow: 0 8px 20px rgba(237, 28, 36, 0.15); }
+        .task-input:checked + .task-card i { color: var(--primary); }
 
-        .input-group-modern input:focus { outline: none; background: #FFF; border-color: var(--primary); box-shadow: 0 0 0 5px rgba(237, 28, 36, 0.1); }
-
-        /* Camera Box & Interaction */
+        /* Camera Box */
         .camera-container {
             position: relative;
             width: 100%;
@@ -96,144 +77,102 @@
             overflow: hidden;
             background: rgba(0,0,0,0.04);
             border: 2px dashed #C7C7CC;
-            min-height: 250px;
+            min-height: 180px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            margin-bottom: 15px;
         }
-
         .camera-container img { width: 100%; height: auto; display: block; }
-        
         .marker {
-            position: absolute;
-            width: 32px;
-            height: 32px;
-            background: var(--primary);
-            border: 3px solid white;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            pointer-events: none;
+            position: absolute; width: 30px; height: 30px; background: var(--primary);
+            border: 2px solid white; border-radius: 50%; transform: translate(-50%, -50%);
+            display: flex; align-items: center; justify-content: center; color: white;
+            font-weight: bold; font-size: 12px; pointer-events: none;
         }
 
-        .instruction-overlay {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            background: rgba(237, 28, 36, 0.9);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 50px;
-            font-size: 0.65rem;
-            font-weight: 800;
-            text-align: center;
-            display: none;
-            z-index: 10;
+        .input-group-modern label { font-size: 0.75rem; font-weight: 700; margin-bottom: 6px; display: block; color: var(--text-sub); }
+        .input-group-modern input {
+            width: 100%; padding: 14px 18px; border-radius: var(--radius-md); border: none;
+            background: rgba(0,0,0,0.04); font-weight: 700; font-size: 0.9rem;
         }
 
-        /* Bottom Nav */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 20px 24px 40px;
-            background: rgba(242, 242, 247, 0.8);
-            backdrop-filter: blur(15px);
-            z-index: 1000;
-        }
-
-        .btn-main {
-            background: var(--text-main);
-            color: white;
-            width: 100%;
-            padding: 20px;
-            border-radius: 22px;
-            border: none;
-            font-weight: 800;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            transition: 0.3s;
-        }
-
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px 24px 40px; background: rgba(242, 242, 247, 0.8); backdrop-filter: blur(15px); z-index: 1000; }
+        .btn-main { background: var(--text-main); color: white; width: 100%; padding: 18px; border-radius: 22px; border: none; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 12px; }
         .btn-main:disabled { opacity: 0.2; }
-        .btn-main:not(:disabled):active { transform: scale(0.96); background: var(--primary); }
-
-        #canvas-hidden { display: none; }
     </style>
 </head>
 <body>
 
     <div class="header-nav">
         <div class="brand">ALFAMIDI <span>FRESH.</span></div>
-        <button class="btn btn-light rounded-pill p-2 px-3" onclick="location.reload()">
-            <i class="ph ph-arrow-counter-clockwise fw-bold"></i>
-        </button>
+        <button class="btn btn-light rounded-pill" onclick="location.reload()"><i class="ph ph-arrows-clockwise fw-bold"></i></button>
     </div>
 
     <div class="progress-container">
-        <div class="progress-bar-custom">
-            <div id="fill-progress"></div>
-        </div>
+        <div class="progress-bar-custom"><div id="fill-progress"></div></div>
     </div>
 
     <div class="container">
-        <div class="section-title">Informasi Toko</div>
-        <div class="glass-card">
-            <div class="input-group-modern">
-                <label>Pilih Toko</label>
-                <input type="text" id="toko" placeholder="KODE TOKO (MISAL: SG10)" autocomplete="off">
+        <div class="section-title">Identitas & Aktivitas</div>
+        <div class="glass-card mb-4">
+            <div class="input-group-modern mb-3">
+                <label>Kode Toko & Nama PIC</label>
+                <div class="row g-2">
+                    <div class="col-4"><input type="text" id="toko" placeholder="SG10"></div>
+                    <div class="col-8"><input type="text" id="pic" placeholder="NAMA PIC"></div>
+                </div>
             </div>
-            <div class="input-group-modern mb-0">
-                <label>Nama Petugas (PIC)</label>
-                <input type="text" id="pic" placeholder="NAMA LENGKAP" autocomplete="off">
+            
+            <label class="text-xs font-bold text-secondary mb-2 d-block" style="font-size: 0.75rem;">Proses Fresh Hari Ini</label>
+            <div class="task-grid">
+                <label><input type="checkbox" id="check-culling" class="task-input"><div class="task-card"><i class="ph ph-trash"></i><span>CULLING</span></div></label>
+                <label><input type="checkbox" id="check-trimming" class="task-input"><div class="task-card"><i class="ph ph-scissors"></i><span>TRIMMING</span></div></label>
+                <label><input type="checkbox" id="check-crisping" class="task-input"><div class="task-card"><i class="ph ph-drop"></i><span>CRISPING</span></div></label>
             </div>
         </div>
 
-        <div class="section-title">Monitoring Visual</div>
+        <div class="section-title">Foto Visual Display</div>
         <div class="glass-card mb-4">
-            <div class="camera-container" id="camera-trigger">
-                <div id="instruction-tap" class="instruction-overlay">KETUK PADA BUAH YANG TIDAK LAYAK</div>
-                
-                <div id="placeholder-ui" class="text-center">
-                    <i class="ph ph-camera-plus" style="font-size: 3.5rem; color: var(--primary);"></i>
-                    <p class="small fw-bold mt-2" style="color: var(--text-sub);">AMBIL FOTO DISPLAY</p>
+            <div class="camera-container" id="display-trigger">
+                <div id="display-placeholder" class="text-center">
+                    <i class="ph ph-camera" style="font-size: 2.5rem; color: var(--primary);"></i>
+                    <p class="small fw-bold mt-1 text-secondary">AMBIL FOTO DISPLAY</p>
                 </div>
-
-                <div id="image-wrapper" class="position-relative w-100 h-100" style="display: none;">
-                    <img id="preview-img" src="">
-                    </div>
-
-                <input type="file" id="file-input" class="d-none" accept="image/*" capture="environment">
+                <div id="display-wrapper" class="position-relative w-100 h-100" style="display: none;">
+                    <img id="display-img" src="">
+                </div>
+                <input type="file" id="input-display" class="d-none" accept="image/*" capture="environment">
             </div>
-            
-            <div class="mt-3">
-                <div class="input-group-modern mb-0">
-                    <label>Catatan Temuan</label>
-                    <input type="text" id="catatan" placeholder="MISAL: APEL MEMAR, PISANG BUSUK">
+            <p class="text-danger fw-bold mb-0" style="font-size: 0.6rem;">*Ketuk pada foto untuk tandai produk rusak</p>
+        </div>
+
+        <div class="section-title">Foto Stock Repacking</div>
+        <div class="glass-card mb-4">
+            <div class="camera-container" id="repack-trigger">
+                <div id="repack-placeholder" class="text-center">
+                    <i class="ph ph-package" style="font-size: 2.5rem; color: #007AFF;"></i>
+                    <p class="small fw-bold mt-1 text-secondary">FOTO STOCK REPACK</p>
                 </div>
+                <div id="repack-wrapper" class="w-100 h-100" style="display: none;">
+                    <img id="repack-img" src="">
+                </div>
+                <input type="file" id="input-repack" class="d-none" accept="image/*" capture="environment">
+            </div>
+            <div class="input-group-modern">
+                <input type="text" id="catatan" placeholder="CATATAN TEMUAN (OPSIONAL)">
             </div>
         </div>
     </div>
 
     <div class="bottom-nav">
         <button id="btn-submit" class="btn-main shadow-lg" disabled>
-            <span>KIRIM LAPORAN</span>
-            <i class="ph ph-paper-plane-tilt-bold"></i>
+            <span>KIRIM REPORT</span><i class="ph ph-paper-plane-right"></i>
         </button>
     </div>
 
-    <canvas id="canvas-hidden"></canvas>
-
+    <canvas id="canvas-process" style="display:none;"></canvas>
     <script src="app.js"></script>
 </body>
 </html>
