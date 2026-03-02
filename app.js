@@ -1,7 +1,7 @@
 // File: app.js
 
 // 1. KONFIGURASI URL GOOGLE APPS SCRIPT
-const SCRIPT_URL = 'MASUKKAN_URL_WEB_APP_ANDA_DISINI'; 
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoz-Nw43oPupfnTxDvE5CQ4lqzZNPGfssmvuNMxkTu6rJwONMKDx5dhbCQ-iBAX0n9/exec'; 
 
 // 2. DEKLARASI ELEMEN DOM
 const photoInput = document.getElementById('photoInput');
