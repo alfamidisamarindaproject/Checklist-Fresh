@@ -1,144 +1,120 @@
-// File: app.js
-
-// 1. KONFIGURASI URL GOOGLE APPS SCRIPT
+// GANTI DENGAN URL APPS SCRIPT ANDA
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoz-Nw43oPupfnTxDvE5CQ4lqzZNPGfssmvuNMxkTu6rJwONMKDx5dhbCQ-iBAX0n9/exec'; 
 
-// 2. DEKLARASI ELEMEN DOM
 const photoInput = document.getElementById('photoInput');
-const previewArea = document.getElementById('previewArea');
-const canvas = document.getElementById('imageCanvas');
-const ctx = canvas.getContext('2d');
-const btnDeteksi = document.getElementById('btnDeteksi');
-const statusResult = document.getElementById('statusResult');
-const checklistForm = document.getElementById('checklistForm');
-const btnSubmit = document.getElementById('btnSubmit');
+const imagePreview = document.getElementById('imagePreview');
+const previewWrapper = document.getElementById('previewWrapper');
+const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+const imageContainer = document.getElementById('imageContainer');
+const submitBtn = document.getElementById('submitBtn');
+let currentStatus = "Belum Dipilih";
+let markers = [];
 
-const inputToko = document.getElementById('inputToko');
-const inputPIC = document.getElementById('inputPIC');
-const inputCatatan = document.getElementById('inputCatatan');
-
-let uploadedImage = new Image();
-let statusDeteksi = "Aman (Belum dicek AI)";
-
-// 3. EVENT: SAAT GAMBAR DIUPLOAD
+// 1. Handling Upload & Preview
 photoInput.addEventListener('change', function(e) {
     const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        uploadedImage.onload = function() {
-            previewArea.classList.remove('hidden');
-            statusResult.innerHTML = '';
-            statusDeteksi = "Aman (Belum dicek AI)";
-            
-            // Kompresi ukuran gambar (Max Width 800px) agar upload cepat
-            const MAX_WIDTH = 800;
-            let width = uploadedImage.width;
-            let height = uploadedImage.height;
-            
-            if (width > MAX_WIDTH) {
-                height = Math.round((height * MAX_WIDTH) / width);
-                width = MAX_WIDTH;
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            // Gambar foto ke canvas
-            ctx.drawImage(uploadedImage, 0, 0, width, height);
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            imagePreview.src = event.target.result;
+            previewWrapper.classList.remove('hidden');
+            uploadPlaceholder.classList.add('hidden');
         }
-        uploadedImage.src = event.target.result;
+        reader.readAsDataURL(file);
     }
-    reader.readAsDataURL(file);
 });
 
-// 4. EVENT: SIMULASI DETEKSI AI
-btnDeteksi.addEventListener('click', function() {
-    if (!uploadedImage.src) return;
+// 2. Fitur Tap to Mark (Menandai buah tidak layak)
+imageContainer.addEventListener('click', function(e) {
+    const rect = imageContainer.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    // Tambah Marker Secara Visual
+    const marker = document.createElement('div');
+    marker.className = 'tap-marker';
+    marker.style.left = x + '%';
+    marker.style.top = y + '%';
+    marker.innerHTML = '✕';
+    imageContainer.appendChild(marker);
     
-    // Refresh canvas ke gambar awal (menghapus kotak jika diklik 2x)
-    ctx.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
+    markers.push({x, y});
     
-    // Konfigurasi Styling Kotak Deteksi
-    ctx.strokeStyle = '#ED1C24'; // Merah Alfamidi
-    ctx.lineWidth = canvas.width * 0.01; 
-    
-    // Menggambar kotak secara acak di area tengah (Simulasi)
-    const boxX = canvas.width * 0.3;
-    const boxY = canvas.height * 0.3;
-    const boxWidth = canvas.width * 0.35;
-    const boxHeight = canvas.height * 0.35;
-
-    ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
-
-    // Menggambar background teks peringatan
-    ctx.fillStyle = '#ED1C24';
-    const fontSize = canvas.width * 0.04;
-    ctx.fillRect(boxX, boxY - fontSize - 10, canvas.width * 0.45, fontSize + 10);
-
-    // Menuliskan teks di dalam background merah
-    ctx.fillStyle = 'white';
-    ctx.font = `bold ${fontSize}px Arial`;
-    ctx.fillText('⚠ Tidak Layak Display', boxX + 5, boxY - 10);
-
-    // Update Status di layar
-    statusDeteksi = "Terdeteksi 1 Item Tidak Layak";
-    statusResult.innerHTML = `<span class="text-red-600">${statusDeteksi}</span>`;
+    // Auto-set status ke Tidak Layak jika ada tanda
+    setStatus('Tidak Layak');
 });
 
-// 5. EVENT: SUBMIT FORM KE GOOGLE SHEETS
-checklistForm.addEventListener('submit', function(e) {
-    e.preventDefault(); // Mencegah halaman reload
+// 3. Status Switcher UI
+function setStatus(status) {
+    currentStatus = status;
+    const btnL = document.getElementById('btnLayak');
+    const btnTL = document.getElementById('btnTidakLayak');
+
+    if(status === 'Layak') {
+        btnL.className = 'flex-1 py-3 rounded-2xl bg-green-500 border-green-500 text-white font-bold transition-all';
+        btnTL.className = 'flex-1 py-3 rounded-2xl border-2 border-gray-100 font-bold text-gray-400 transition-all';
+    } else {
+        btnTL.className = 'flex-1 py-3 rounded-2xl bg-red-600 border-red-600 text-white font-bold transition-all';
+        btnL.className = 'flex-1 py-3 rounded-2xl border-2 border-gray-100 font-bold text-gray-400 transition-all';
+    }
+}
+
+// 4. Submit Data
+document.getElementById('mainForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
     
-    // Ubah UI tombol menjadi loading
-    const originalBtnText = btnSubmit.innerHTML;
-    btnSubmit.innerHTML = 'Mengirim Laporan... ⏳';
-    btnSubmit.disabled = true;
-    btnSubmit.classList.replace('bg-green-600', 'bg-gray-400');
+    // Gabungkan gambar asli dengan marker menggunakan Canvas sebelum kirim
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "Sedang Mengirim...";
 
-    // Ambil gambar dari canvas menjadi text Base64 (Quality 0.7 = 70%)
-    const base64Image = canvas.width > 0 ? canvas.toDataURL('image/jpeg', 0.7) : null;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = imagePreview.naturalWidth;
+    canvas.height = imagePreview.naturalHeight;
+    
+    ctx.drawImage(imagePreview, 0, 0);
+    
+    // Gambar semua marker ke canvas agar tersimpan di Drive
+    ctx.fillStyle = "red";
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = canvas.width * 0.005;
+    const radius = canvas.width * 0.02;
 
-    // Susun data yang akan dikirim (Format JSON)
+    markers.forEach(m => {
+        const realX = (m.x / 100) * canvas.width;
+        const realY = (m.y / 100) * canvas.height;
+        
+        ctx.beginPath();
+        ctx.arc(realX, realY, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+    });
+
+    const finalImage = canvas.toDataURL('image/jpeg', 0.6);
+
     const payload = {
-        toko: inputToko.value,
-        pic: inputPIC.value,
-        catatan: inputCatatan.value,
-        status: statusDeteksi,
-        imageBase64: base64Image
+        toko: document.getElementById('toko').value,
+        pic: document.getElementById('pic').value,
+        catatan: document.getElementById('catatan').value,
+        status: currentStatus,
+        imageBase64: finalImage
     };
 
-    // Proses pengiriman melalui Fetch API ke URL Google Script
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        // Content-Type di-set text/plain untuk menghindari error CORS preflight di Google
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.status === 'success') {
-            alert('Laporan berhasil disubmit!\nData masuk ke Google Sheets & Foto tersimpan di Drive.');
-            
-            // Reset Form dan UI
-            checklistForm.reset();
-            previewArea.classList.add('hidden');
-            ctx.clearRect(0, 0, canvas.width, canvas.height); 
-            statusResult.innerHTML = '';
-            uploadedImage.src = ''; 
-        } else {
-            alert('Gagal mengirim data: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error Pengiriman:', error);
-        alert('Terjadi kesalahan koneksi internet atau URL Script salah.');
-    })
-    .finally(() => {
-        // Kembalikan tombol ke keadaan normal
-        btnSubmit.innerHTML = originalBtnText;
-        btnSubmit.disabled = false;
-        btnSubmit.classList.replace('bg-gray-400', 'bg-green-600');
-    });
+    try {
+        const resp = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Penting untuk Apps Script
+            body: JSON.stringify(payload)
+        });
+        alert('Laporan Terkirim! Terima kasih.');
+        location.reload();
+    } catch (err) {
+        alert('Gagal mengirim laporan. Cek koneksi Anda.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "KIRIM LAPORAN SEKARANG";
+    }
+});
+
+document.getElementById('resetPhoto').addEventListener('click', () => {
+    location.reload();
 });
