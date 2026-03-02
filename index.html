@@ -4,175 +4,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FRESH MONITORING | ALFAMIDI</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-        :root {
-            --bg: #F2F2F7;
-            --primary: #ED1C24;
-            --accent: #FFCC00;
-            --surface: rgba(255, 255, 255, 0.85);
-            --text-main: #1C1C1E;
-            --text-sub: #8E8E93;
-            --radius-lg: 28px;
-            --radius-md: 18px;
-        }
-
-        body {
-            background-color: var(--bg);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            color: var(--text-main);
-            padding-bottom: 140px;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .header-nav { padding: 40px 24px 10px; display: flex; justify-content: space-between; align-items: center; }
-        .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); }
-        .brand span { color: var(--text-main); }
-
-        .progress-container { padding: 0 24px; margin-bottom: 25px; }
-        .progress-bar-custom { height: 6px; background: #E5E5EA; border-radius: 10px; overflow: hidden; }
-        #fill-progress { width: 0%; height: 100%; background: var(--primary); transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        .section-title { font-size: 0.7rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1.5px; margin: 30px 0 12px 28px; }
-
-        .glass-card {
-            background: var(--surface);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            margin: 0 16px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.03);
-        }
-
-        /* Checklist Grid */
-        .task-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .task-card {
-            background: rgba(0,0,0,0.04);
-            border-radius: var(--radius-md);
-            padding: 15px 5px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.2s;
-            border: 2px solid transparent;
-        }
-        .task-card i { font-size: 1.5rem; margin-bottom: 8px; display: block; color: var(--text-sub); }
-        .task-card span { font-size: 0.65rem; font-weight: 800; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&display=swap');
+        body { background: #F2F2F7; font-family: 'Plus Jakarta Sans', sans-serif; padding-bottom: 120px; }
+        .brand { font-weight: 800; color: #000; padding: 40px 25px 10px; font-size: 1.5rem; }
+        .brand span { color: #ED1C24; }
+        .glass-card { background: white; border-radius: 28px; padding: 25px; margin: 15px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
+        
+        /* Checklist UI */
+        .task-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .task-input { display: none; }
-        .task-input:checked + .task-card { background: #FFF; border-color: var(--primary); color: var(--primary); box-shadow: 0 8px 20px rgba(237, 28, 36, 0.15); }
-        .task-input:checked + .task-card i { color: var(--primary); }
+        .task-card { background: #F8F8F8; border-radius: 20px; padding: 20px 5px; text-align: center; border: 2px solid transparent; transition: 0.3s; }
+        .task-input:checked + .task-card { border-color: #000; background: #FFF; box-shadow: 0 10px 20px rgba(0,0,0,0.08); transform: translateY(-3px); }
+        .task-card i { font-size: 1.8rem; display: block; margin-bottom: 8px; color: #8E8E93; }
+        .task-input:checked + .task-card i { color: #ED1C24; }
+        .task-card span { font-size: 0.7rem; font-weight: 800; }
 
         /* Camera Box */
-        .camera-container {
-            position: relative;
-            width: 100%;
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            background: rgba(0,0,0,0.04);
-            border: 2px dashed #C7C7CC;
-            min-height: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            margin-bottom: 15px;
-        }
-        .camera-container img { width: 100%; height: auto; display: block; }
-        .marker {
-            position: absolute; width: 30px; height: 30px; background: var(--primary);
-            border: 2px solid white; border-radius: 50%; transform: translate(-50%, -50%);
-            display: flex; align-items: center; justify-content: center; color: white;
-            font-weight: bold; font-size: 12px; pointer-events: none;
-        }
-
-        .input-group-modern label { font-size: 0.75rem; font-weight: 700; margin-bottom: 6px; display: block; color: var(--text-sub); }
-        .input-group-modern input {
-            width: 100%; padding: 14px 18px; border-radius: var(--radius-md); border: none;
-            background: rgba(0,0,0,0.04); font-weight: 700; font-size: 0.9rem;
-        }
-
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px 24px 40px; background: rgba(242, 242, 247, 0.8); backdrop-filter: blur(15px); z-index: 1000; }
-        .btn-main { background: var(--text-main); color: white; width: 100%; padding: 18px; border-radius: 22px; border: none; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 12px; }
-        .btn-main:disabled { opacity: 0.2; }
+        .cam-container { width: 100%; height: 160px; border-radius: 24px; border: 2px dashed #D1D1D6; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; position: relative; background: #FFF; }
+        .cam-container img { width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: 2; }
+        .cam-container i { font-size: 2.5rem; color: #C7C7CC; margin-bottom: 5px; }
+        
+        .btn-submit { position: fixed; bottom: 30px; left: 20px; right: 20px; background: #000; color: white; border: none; padding: 22px; border-radius: 24px; font-weight: 800; z-index: 100; transition: 0.3s; }
+        .btn-submit:disabled { opacity: 0.2; }
+        .btn-submit:not(:disabled):active { transform: scale(0.95); background: #ED1C24; }
     </style>
 </head>
 <body>
 
-    <div class="header-nav">
-        <div class="brand">ALFAMIDI <span>FRESH.</span></div>
-        <button class="btn btn-light rounded-pill" onclick="location.reload()"><i class="ph ph-arrows-clockwise fw-bold"></i></button>
-    </div>
+    <div class="brand">FRESH <span>MONITORING.</span></div>
 
-    <div class="progress-container">
-        <div class="progress-bar-custom"><div id="fill-progress"></div></div>
-    </div>
-
-    <div class="container">
-        <div class="section-title">Identitas & Aktivitas</div>
-        <div class="glass-card mb-4">
-            <div class="input-group-modern mb-3">
-                <label>Kode Toko & Nama PIC</label>
-                <div class="row g-2">
-                    <div class="col-4"><input type="text" id="toko" placeholder="SG10"></div>
-                    <div class="col-8"><input type="text" id="pic" placeholder="NAMA PIC"></div>
-                </div>
-            </div>
-            
-            <label class="text-xs font-bold text-secondary mb-2 d-block" style="font-size: 0.75rem;">Proses Fresh Hari Ini</label>
-            <div class="task-grid">
-                <label><input type="checkbox" id="check-culling" class="task-input"><div class="task-card"><i class="ph ph-trash"></i><span>CULLING</span></div></label>
-                <label><input type="checkbox" id="check-trimming" class="task-input"><div class="task-card"><i class="ph ph-scissors"></i><span>TRIMMING</span></div></label>
-                <label><input type="checkbox" id="check-crisping" class="task-input"><div class="task-card"><i class="ph ph-drop"></i><span>CRISPING</span></div></label>
-            </div>
+    <div class="glass-card">
+        <div class="row g-2 mb-4">
+            <div class="col-4"><input type="text" id="toko" class="form-control border-0 bg-light p-3 rounded-4 fw-bold" placeholder="KODE"></div>
+            <div class="col-8"><input type="text" id="pic" class="form-control border-0 bg-light p-3 rounded-4 fw-bold" placeholder="NAMA PIC"></div>
         </div>
-
-        <div class="section-title">Foto Visual Display</div>
-        <div class="glass-card mb-4">
-            <div class="camera-container" id="display-trigger">
-                <div id="display-placeholder" class="text-center">
-                    <i class="ph ph-camera" style="font-size: 2.5rem; color: var(--primary);"></i>
-                    <p class="small fw-bold mt-1 text-secondary">AMBIL FOTO DISPLAY</p>
-                </div>
-                <div id="display-wrapper" class="position-relative w-100 h-100" style="display: none;">
-                    <img id="display-img" src="">
-                </div>
-                <input type="file" id="input-display" class="d-none" accept="image/*" capture="environment">
-            </div>
-            <p class="text-danger fw-bold mb-0" style="font-size: 0.6rem;">*Ketuk pada foto untuk tandai produk rusak</p>
-        </div>
-
-        <div class="section-title">Foto Stock Repacking</div>
-        <div class="glass-card mb-4">
-            <div class="camera-container" id="repack-trigger">
-                <div id="repack-placeholder" class="text-center">
-                    <i class="ph ph-package" style="font-size: 2.5rem; color: #007AFF;"></i>
-                    <p class="small fw-bold mt-1 text-secondary">FOTO STOCK REPACK</p>
-                </div>
-                <div id="repack-wrapper" class="w-100 h-100" style="display: none;">
-                    <img id="repack-img" src="">
-                </div>
-                <input type="file" id="input-repack" class="d-none" accept="image/*" capture="environment">
-            </div>
-            <div class="input-group-modern">
-                <input type="text" id="catatan" placeholder="CATATAN TEMUAN (OPSIONAL)">
-            </div>
+        <div class="task-grid">
+            <label><input type="checkbox" id="culling" class="task-input"><div class="task-card"><i class="ph ph-trash"></i><span>CULLING</span></div></label>
+            <label><input type="checkbox" id="trimming" class="task-input"><div class="task-card"><i class="ph ph-scissors"></i><span>TRIMMING</span></div></label>
+            <label><input type="checkbox" id="crisping" class="task-input"><div class="task-card"><i class="ph ph-drop"></i><span>CRISPING</span></div></label>
         </div>
     </div>
 
-    <div class="bottom-nav">
-        <button id="btn-submit" class="btn-main shadow-lg" disabled>
-            <span>KIRIM REPORT</span><i class="ph ph-paper-plane-right"></i>
-        </button>
+    <div class="px-3 row g-3">
+        <div class="col-6">
+            <div class="cam-container" onclick="document.getElementById('in-dis').click()">
+                <i class="ph ph-camera-plus"></i>
+                <span class="small fw-bold text-secondary">FOTO DISPLAY</span>
+                <img id="p-dis" src="">
+            </div>
+            <input type="file" id="in-dis" class="d-none" accept="image/*" capture="environment">
+        </div>
+        <div class="col-6">
+            <div class="cam-container" onclick="document.getElementById('in-rep').click()">
+                <i class="ph ph-package"></i>
+                <span class="small fw-bold text-secondary">STOCK REPACK</span>
+                <img id="p-rep" src="">
+            </div>
+            <input type="file" id="in-rep" class="d-none" accept="image/*" capture="environment">
+        </div>
     </div>
 
-    <canvas id="canvas-process" style="display:none;"></canvas>
-    <script src="app.js"></script>
+    <button id="btn-submit" class="btn-submit shadow-lg" disabled>KIRIM DATA KE GSHEET</button>
+
+    <script>
+        const SCRIPT_URL = 'URL_WEB_APP_ANDA'; // GANTI INI
+        let photos = { dis: null, rep: null };
+
+        function setupCam(inputId, previewId, key) {
+            document.getElementById(inputId).onchange = (e) => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    photos[key] = ev.target.result;
+                    document.getElementById(previewId).src = ev.target.result;
+                    checkValid();
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            };
+        }
+
+        setupCam('in-dis', 'p-dis', 'dis');
+        setupCam('in-rep', 'p-rep', 'rep');
+
+        function checkValid() {
+            const ok = document.getElementById('toko').value && document.getElementById('pic').value && photos.dis && photos.rep;
+            document.getElementById('btn-submit').disabled = !ok;
+        }
+
+        document.getElementById('toko').oninput = checkValid;
+        document.getElementById('pic').oninput = checkValid;
+
+        document.getElementById('btn-submit').onclick = async () => {
+            Swal.fire({ title: 'Mengirim...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            const body = {
+                toko: document.getElementById('toko').value,
+                pic: document.getElementById('pic').value,
+                culling: document.getElementById('culling').checked,
+                trimming: document.getElementById('trimming').checked,
+                crisping: document.getElementById('crisping').checked,
+                foto_display: photos.dis,
+                foto_repack: photos.rep
+            };
+
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(body) });
+                Swal.fire('Berhasil!', 'Laporan tersimpan di GSheet & Drive.', 'success').then(() => location.reload());
+            } catch (e) {
+                Swal.fire('Error', 'Gagal kirim data.', 'error');
+            }
+        };
+    </script>
 </body>
 </html>
