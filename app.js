@@ -1,46 +1,46 @@
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoz-Nw43oPupfnTxDvE5CQ4lqzZNPGfssmvuNMxkTu6rJwONMKDx5dhbCQ-iBAX0n9/exec'; // Ganti dengan URL Google Apps Script
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoz-Nw43oPupfnTxDvE5CQ4lqzZNPGfssmvuNMxkTu6rJwONMKDx5dhbCQ-iBAX0n9/exec';
 
-const fileInput = document.getElementById('file-input');
-const cameraTrigger = document.getElementById('camera-trigger');
-const previewImg = document.getElementById('preview-img');
-const imageWrapper = document.getElementById('image-wrapper');
-const placeholderUI = document.getElementById('placeholder-ui');
-const instructionTap = document.getElementById('instruction-tap');
-const btnSubmit = document.getElementById('btn-submit');
-const fillProgress = document.getElementById('fill-progress');
+const state = {
+    displayBase64: null,
+    repackBase64: null,
+    markers: []
+};
 
-let markers = [];
+// Handle Input Display Foto
+document.getElementById('display-trigger').onclick = (e) => {
+    if (!state.displayBase64) document.getElementById('input-display').click();
+    else handleMarker(e);
+};
 
-// 1. Trigger Kamera
-cameraTrigger.addEventListener('click', (e) => {
-    if (!previewImg.src || previewImg.src.includes('window')) {
-        fileInput.click();
-    } else {
-        // Jika foto sudah ada, fungsi klik adalah untuk memberi tanda
-        addMarker(e);
-    }
-});
+document.getElementById('input-display').onchange = function() {
+    loadImage(this.files[0], 'display');
+};
 
-// 2. Handle Foto Masuk
-fileInput.addEventListener('change', function() {
-    const file = this.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            placeholderUI.style.display = 'none';
-            imageWrapper.style.display = 'block';
-            instructionTap.style.display = 'block';
-            cameraTrigger.style.border = 'none';
-            updateProgress();
-        }
-        reader.readAsDataURL(file);
-    }
-});
+// Handle Input Repack Foto
+document.getElementById('repack-trigger').onclick = () => {
+    document.getElementById('input-repack').click();
+};
 
-// 3. Tambah Tanda Tidak Layak (X)
-function addMarker(e) {
-    const rect = cameraTrigger.getBoundingClientRect();
+document.getElementById('input-repack').onchange = function() {
+    loadImage(this.files[0], 'repack');
+};
+
+function loadImage(file, type) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        state[`${type}Base64`] = e.target.result;
+        document.getElementById(`${type}-placeholder`).style.display = 'none';
+        document.getElementById(`${type}-wrapper`).style.display = 'block';
+        document.getElementById(`${type}-img`).src = e.target.result;
+        updateProgress();
+    };
+    reader.readAsDataURL(file);
+}
+
+function handleMarker(e) {
+    const container = document.getElementById('display-trigger');
+    const rect = container.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
@@ -49,88 +49,78 @@ function addMarker(e) {
     marker.style.left = x + '%';
     marker.style.top = y + '%';
     marker.innerHTML = '✕';
-    imageWrapper.appendChild(marker);
-
-    markers.push({ x, y });
-    updateProgress();
+    document.getElementById('display-wrapper').appendChild(marker);
+    state.markers.push({x, y});
 }
 
-// 4. Update Progress Bar & Validasi Button
 function updateProgress() {
-    let score = 0;
-    if (document.getElementById('toko').value) score += 25;
-    if (document.getElementById('pic').value) score += 25;
-    if (previewImg.src && previewImg.src.length > 100) score += 50;
+    const isReady = document.getElementById('toko').value && 
+                    document.getElementById('pic').value && 
+                    state.displayBase64 && 
+                    state.repackBase64;
     
-    fillProgress.style.width = score + '%';
-    btnSubmit.disabled = score < 100;
+    document.getElementById('btn-submit').disabled = !isReady;
+    document.getElementById('fill-progress').style.width = isReady ? '100%' : '50%';
 }
 
-// Listen to inputs for progress
-document.querySelectorAll('input').forEach(input => {
-    input.addEventListener('input', updateProgress);
+// Listen for inputs
+['toko', 'pic'].forEach(id => {
+    document.getElementById(id).oninput = updateProgress;
 });
 
-// 5. Submit Laporan
-btnSubmit.addEventListener('click', async () => {
-    Swal.fire({
-        title: 'Mengirim Laporan...',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
+document.getElementById('btn-submit').onclick = async () => {
+    Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-    const canvas = document.getElementById('canvas-hidden');
-    const ctx = canvas.getContext('2d');
-    
-    // Set canvas size to image original size
-    canvas.width = previewImg.naturalWidth;
-    canvas.height = previewImg.naturalHeight;
-    ctx.drawImage(previewImg, 0, 0);
-
-    // Draw Markers on Final Image
-    ctx.fillStyle = "#ED1C24";
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = canvas.width * 0.01;
-    const fontS = canvas.width * 0.05;
-    ctx.font = `bold ${fontS}px Arial`;
-
-    markers.forEach(m => {
-        const posX = (m.x / 100) * canvas.width;
-        const posY = (m.y / 100) * canvas.height;
-        
-        // Draw Circle
-        ctx.beginPath();
-        ctx.arc(posX, posY, fontS, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Draw X
-        ctx.fillStyle = "white";
-        ctx.textAlign = "center";
-        ctx.fillText("X", posX, posY + (fontS/3));
-        ctx.fillStyle = "#ED1C24"; // reset
-    });
-
-    const finalImageData = canvas.toDataURL('image/jpeg', 0.7);
+    // Gabungkan Foto Display dengan Markers
+    const finalDisplay = await processImageWithMarkers();
 
     const payload = {
         toko: document.getElementById('toko').value,
         pic: document.getElementById('pic').value,
+        culling: document.getElementById('check-culling').checked,
+        trimming: document.getElementById('check-trimming').checked,
+        crisping: document.getElementById('check-crisping').checked,
+        foto_display: finalDisplay,
+        foto_repack: state.repackBase64,
         catatan: document.getElementById('catatan').value,
-        foto: finalImageData,
-        jumlah_temuan: markers.length
+        jumlah_marker: state.markers.length
     };
 
     try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        
-        Swal.fire('Berhasil!', 'Laporan monitoring telah terkirim.', 'success')
-            .then(() => location.reload());
-            
-    } catch (error) {
-        Swal.fire('Error', 'Gagal terhubung ke server.', 'error');
+        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        Swal.fire('Sukses!', 'Laporan monitoring terkirim.', 'success').then(() => location.reload());
+    } catch (e) {
+        Swal.fire('Error', 'Gagal mengirim data.', 'error');
     }
-});
+};
+
+async function processImageWithMarkers() {
+    const canvas = document.getElementById('canvas-process');
+    const ctx = canvas.getContext('2d');
+    const img = document.getElementById('display-img');
+    
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    ctx.drawImage(img, 0, 0);
+
+    ctx.fillStyle = "#ED1C24";
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = canvas.width * 0.005;
+    const size = canvas.width * 0.03;
+
+    state.markers.forEach(m => {
+        const px = (m.x / 100) * canvas.width;
+        const py = (m.y / 100) * canvas.height;
+        ctx.beginPath();
+        ctx.arc(px, py, size, 0, Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "white";
+        ctx.font = `bold ${size}px Arial`;
+        ctx.textAlign = "center";
+        ctx.fillText("X", px, py + (size/3));
+        ctx.fillStyle = "#ED1C24";
+    });
+
+    return canvas.toDataURL('image/jpeg', 0.7);
+}
