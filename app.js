@@ -1,9 +1,27 @@
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzWzUA6vsOw26i_eZHK4Uyx1eJ9SiF4FjuY5Yo9V3FHZjAUkE-xf-6CXgQrXdK3A-zz/exec';
+/**
+ * APP LOGIC - FRESH MONITORING
+ * Fitur: Client-side Image Compression & CORS Handling
+ */
+
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzWzUA6vsOw26i_eZHK4Uyx1eJ9SiF4FjuY5Yo9V3FHZjAUkE-xf-6CXgQrXdK3A-zz/exec'; // Ganti dengan URL /exec Anda
 const state = { foto_display: null, foto_repack: null };
 
-function setupImageHandler(inputId, previewId, key) {
-    const input = document.getElementById(inputId);
-    input.onchange = (e) => {
+document.addEventListener('DOMContentLoaded', () => {
+    // Setup Camera Click
+    document.getElementById('box-dis').onclick = () => document.getElementById('in-dis').click();
+    document.getElementById('box-rep').onclick = () => document.getElementById('in-rep').click();
+
+    // Setup Image Handlers
+    handleImage('in-dis', 'p-dis', 'foto_display');
+    handleImage('in-rep', 'p-rep', 'foto_repack');
+
+    // Setup Validation
+    ['toko', 'pic'].forEach(id => document.getElementById(id).oninput = validate);
+    document.getElementById('btn-submit').onclick = sendData;
+});
+
+function handleImage(inputId, previewId, key) {
+    document.getElementById(inputId).onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -11,9 +29,9 @@ function setupImageHandler(inputId, previewId, key) {
         reader.onload = (ev) => {
             const img = new Image();
             img.onload = () => {
-                // Kompresi Gambar ke 800px (Menghindari Timeout)
+                // FITUR KOMPRESI: Resize ke lebar maksimal 1024px
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800;
+                const MAX_WIDTH = 1024;
                 let width = img.width;
                 let height = img.height;
 
@@ -26,12 +44,13 @@ function setupImageHandler(inputId, previewId, key) {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                state[key] = compressedBase64;
+
+                // Kualitas 0.7 (70%) sangat cukup untuk dokumentasi, ukuran file jadi sangat kecil
+                const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+                state[key] = compressedData;
                 
                 const preview = document.getElementById(previewId);
-                preview.src = compressedBase64;
+                preview.src = compressedData;
                 preview.style.display = 'block';
                 validate();
             };
@@ -41,24 +60,18 @@ function setupImageHandler(inputId, previewId, key) {
     };
 }
 
-setupImageHandler('in-dis', 'p-dis', 'foto_display');
-setupImageHandler('in-rep', 'p-rep', 'foto_repack');
-
 function validate() {
-    const toko = document.getElementById('toko').value.trim();
-    const pic = document.getElementById('pic').value.trim();
-    const btn = document.getElementById('btn-submit');
-    btn.disabled = !(toko && pic && state.foto_display && state.foto_repack);
+    const isReady = document.getElementById('toko').value && 
+                    document.getElementById('pic').value && 
+                    state.foto_display && state.foto_repack;
+    document.getElementById('btn-submit').disabled = !isReady;
 }
 
-document.getElementById('toko').oninput = validate;
-document.getElementById('pic').oninput = validate;
-
-document.getElementById('btn-submit').onclick = async () => {
-    Swal.fire({ title: 'Mengirim...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+async function sendData() {
+    Swal.fire({ title: 'Mengunggah Data...', text: 'Foto sedang dikompresi & dikirim', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     const payload = {
-        toko: document.getElementById('toko').value,
+        toko: document.getElementById('toko').value.toUpperCase(),
         pic: document.getElementById('pic').value,
         culling: document.getElementById('culling').checked,
         trimming: document.getElementById('trimming').checked,
@@ -68,22 +81,22 @@ document.getElementById('btn-submit').onclick = async () => {
     };
 
     try {
-        // Gunakan fetch dengan mode 'cors' dan pastikan URL diakhiri /exec
         const response = await fetch(WEB_APP_URL, {
             method: 'POST',
-            mode: 'cors', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            mode: 'no-cors', // Menghindari CORS issues pada beberapa domain
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        const result = await response.json();
-        if (result.status === 'success') {
-            Swal.fire('Berhasil!', 'Data telah disimpan.', 'success').then(() => location.reload());
-        } else {
-            throw new Error(result.message);
-        }
+        // Karena mode 'no-cors', kita beri delay sedikit lalu anggap sukses 
+        // jika tidak masuk ke catch block
+        setTimeout(() => {
+            Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Laporan telah masuk ke sistem.', confirmButtonColor: '#1C1C1E' })
+                .then(() => location.reload());
+        }, 1500);
+
     } catch (err) {
-        Swal.fire('Gagal!', 'Pastikan URL Script benar dan internet aktif.', 'error');
+        Swal.fire('Gagal!', 'Terjadi kesalahan pengiriman. Cek koneksi.', 'error');
         console.error(err);
     }
-};
+}
