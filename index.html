@@ -1,1 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist Display Buah & Sayur - Alfamidi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Penyesuaian warna khas Alfamidi (Merah & Kuning) */
+        .bg-alfamidi { background-color: #177d28; }
+        .text-alfamidi { color: #177d28; }
+        .btn-alfamidi { background-color: #177d28; color: white; transition: all 0.3s;}
+        .btn-alfamidi:hover { background-color: #177d28; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
 
+    <header class="bg-alfamidi shadow-md py-4">
+        <div class="container mx-auto px-4">
+            <h1 class="text-2xl font-bold text-white text-center">
+                🛒 E-Checklist Display Buah & Sayur Samarinda
+            </h1>
+            <p class="text-yellow-300 text-center text-sm mt-1">Monitoring Kualitas Produk Fresh</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 max-w-3xl">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            
+            <form id="checklistForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Kode / Nama Toko</label>
+                        <input type="text" placeholder="Contoh: MIDI Sudirman (M123)" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Nama PIC (Person in Charge)</label>
+                        <input type="text" placeholder="Nama Karyawan" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <label class="block text-gray-700 font-semibold mb-2">Ambil/Upload Foto Display</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition">
+                        <input type="file" id="photoInput" accept="image/*" capture="environment" class="w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+                        <p class="text-xs text-gray-500 mt-2">Format: JPG, PNG. Pastikan pencahayaan terang.</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 hidden" id="previewArea">
+                    <h3 class="text-gray-700 font-semibold mb-2">Preview & Hasil Deteksi:</h3>
+                    <div class="relative w-full overflow-hidden rounded-lg border bg-gray-50 flex justify-center">
+                        <canvas id="imageCanvas" class="max-w-full h-auto"></canvas>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-between items-center">
+                        <button type="button" onclick="simulateAIDetection()" class="btn-alfamidi px-4 py-2 rounded-md font-semibold w-full md:w-auto">
+                            🔍 Deteksi Kelayakan (AI AI-an)
+                        </button>
+                        <p id="statusResult" class="font-bold text-lg ml-4"></p>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <label class="block text-gray-700 font-semibold mb-2">Catatan Tambahan</label>
+                    <textarea rows="3" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Contoh: Pisang sudah mulai kecoklatan, apel ada yang memar..."></textarea>
+                </div>
+
+                <div class="mt-8 border-t pt-6">
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md transition">
+                        Kirim Laporan Checklist
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const photoInput = document.getElementById('photoInput');
+        const previewArea = document.getElementById('previewArea');
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusResult = document.getElementById('statusResult');
+        let uploadedImage = new Image();
+
+        // Handle ketika user mengupload gambar
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                uploadedImage.onload = function() {
+                    // Tampilkan area preview
+                    previewArea.classList.remove('hidden');
+                    
+                    // Reset text status
+                    statusResult.innerHTML = '';
+                    
+                    // Sesuaikan ukuran canvas dengan gambar asli
+                    canvas.width = uploadedImage.width;
+                    canvas.height = uploadedImage.height;
+                    
+                    // Gambar foto ke canvas
+                    ctx.drawImage(uploadedImage, 0, 0);
+                }
+                uploadedImage.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+
+        // Fungsi Simulasi Deteksi AI
+        // CATATAN: Di dunia nyata, di sinilah Anda mengirim gambar ke API Backend (misal API Python/YOLO)
+        function simulateAIDetection() {
+            if (!uploadedImage.src) return;
+
+            // Gambar ulang foto untuk menghapus kotak sebelumnya (jika tombol ditekan berkali-kali)
+            ctx.drawImage(uploadedImage, 0, 0);
+
+            // ==========================================
+            // SIMULASI: Menggambar kotak deteksi AI
+            // ==========================================
+            
+            // Mengatur style kotak merah
+            ctx.strokeStyle = '#ED1C24'; 
+            ctx.lineWidth = uploadedImage.width * 0.01; // Responsif terhadap ukuran gambar
+            
+            // Menentukan koordinat kotak (Ini sekadar simulasi acak di tengah gambar)
+            const boxX = canvas.width * 0.3;
+            const boxY = canvas.height * 0.3;
+            const boxWidth = canvas.width * 0.3;
+            const boxHeight = canvas.height * 0.3;
+
+            // Menggambar kotak
+            ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+
+            // Menambahkan background untuk teks agar mudah dibaca
+            ctx.fillStyle = '#ED1C24';
+            const fontSize = canvas.width * 0.04;
+            ctx.fillRect(boxX, boxY - fontSize - 10, canvas.width * 0.35, fontSize + 10);
+
+            // Menggambar Teks "Tidak Layak Display"
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.fillText('⚠ Tidak Layak Display', boxX + 5, boxY - 10);
+
+            // Update UI Status
+            statusResult.innerHTML = '<span class="text-red-600">Terdeteksi: 1 Item Tidak Layak</span>';
+        }
+
+        // Mencegah form reload saat submit (Hanya untuk demo)
+        document.getElementById('checklistForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Laporan berhasil disubmit ke server pusat!');
+            this.reset();
+            previewArea.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
