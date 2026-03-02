@@ -4,199 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fresh Monitoring System</title>
-    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <style>
-        :root {
-            --brand-red: #ED1C24;
-            --ios-bg: #F2F2F7;
-            --card-shadow: 0 10px 25px rgba(0,0,0,0.05);
-        }
-
-        body { 
-            background-color: var(--ios-bg); 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #1C1C1E;
-            padding-bottom: 140px;
-        }
-
-        .navbar-brand-custom {
-            font-weight: 800;
-            font-size: 1.5rem;
-            padding: 30px 20px 10px;
-            letter-spacing: -1px;
-        }
-        .navbar-brand-custom span { color: var(--brand-red); }
-
-        .main-card {
-            background: #FFFFFF;
-            border-radius: 24px;
-            padding: 24px;
-            margin: 0 16px 16px;
-            border: none;
-            box-shadow: var(--card-shadow);
-        }
-
-        .input-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #8E8E93;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        .form-control-custom {
-            border: none;
-            background: #F2F2F7;
-            border-radius: 14px;
-            padding: 14px 18px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        .form-control-custom:focus {
-            background: #E5E5EA;
-            box-shadow: none;
-        }
-
-        /* Checklist Grid */
-        .check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        :root { --brand-red: #ED1C24; --ios-bg: #F2F2F7; }
+        body { background-color: var(--ios-bg); font-family: sans-serif; padding-bottom: 120px; }
+        .main-card { background: white; border-radius: 20px; padding: 20px; margin: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .form-control-custom { border: none; background: #F2F2F7; border-radius: 12px; padding: 12px; font-weight: 600; }
+        .check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .check-item input { display: none; }
-        .check-box {
-            background: #F2F2F7;
-            border-radius: 18px;
-            padding: 16px 5px;
-            text-align: center;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: 0.2s;
-        }
-        .check-item input:checked + .check-box {
-            background: #FFFFFF;
-            border-color: var(--brand-red);
-            box-shadow: 0 5px 15px rgba(237, 28, 36, 0.1);
-        }
-        .check-box i { font-size: 1.6rem; margin-bottom: 6px; display: block; color: #8E8E93; }
-        .check-item input:checked + .check-box i { color: var(--brand-red); }
-        .check-box span { font-size: 0.7rem; font-weight: 800; }
-
-        /* Photo Area */
-        .photo-uploader {
-            width: 100%;
-            height: 180px;
-            background: #FFFFFF;
-            border-radius: 24px;
-            border: 2px dashed #D1D1D6;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            position: relative;
-            cursor: pointer;
-        }
-        .photo-uploader img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            z-index: 5;
-            display: none;
-        }
-        .photo-uploader i { font-size: 2.5rem; color: #C7C7CC; margin-bottom: 8px; }
-        .photo-uploader span { font-size: 0.8rem; font-weight: 700; color: #8E8E93; }
-
-        /* Floating Button */
-        .btn-submit-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 20px 16px 40px;
-            background: linear-gradient(to top, rgba(242,242,247,1) 70%, rgba(242,242,247,0));
-            z-index: 100;
-        }
-        .btn-submit {
-            width: 100%;
-            background: #1C1C1E;
-            color: #FFFFFF;
-            border: none;
-            padding: 20px;
-            border-radius: 20px;
-            font-weight: 800;
-            font-size: 1rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            transition: 0.3s;
-        }
-        .btn-submit:disabled { opacity: 0.2; transform: scale(0.98); }
-        .btn-submit:not(:disabled):active { transform: scale(0.96); background: var(--brand-red); }
+        .check-box { background: #F2F2F7; border-radius: 15px; padding: 15px 5px; text-align: center; cursor: pointer; border: 2px solid transparent; }
+        .check-item input:checked + .check-box { border-color: var(--brand-red); background: white; }
+        .check-box i { font-size: 1.5rem; display: block; margin-bottom: 5px; }
+        .photo-uploader { width: 100%; height: 150px; background: white; border-radius: 20px; border: 2px dashed #D1D1D6; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .photo-uploader img { width: 100%; height: 100%; object-fit: cover; position: absolute; display: none; z-index: 5; }
+        .btn-submit { width: calc(100% - 30px); position: fixed; bottom: 30px; left: 15px; background: #000; color: #fff; border: none; padding: 18px; border-radius: 15px; font-weight: 800; }
+        .btn-submit:disabled { opacity: 0.3; }
     </style>
 </head>
 <body>
-
-    <div class="navbar-brand-custom">FRESH <span>MONITOR.</span></div>
-
     <div class="main-card">
-        <div class="row g-3">
-            <div class="col-4">
-                <span class="input-label">Toko</span>
-                <input type="text" id="toko" class="form-control form-control-custom" placeholder="Kode Toko...">
-            </div>
-            <div class="col-8">
-                <span class="input-label">Nama </span>
-                <input type="text" id="pic" class="form-control form-control-custom" placeholder="Nama Lengkap...">
-            </div>
+        <h5 class="fw-bold mb-3">FRESH <span class="text-danger">MONITOR.</span></h5>
+        <div class="row g-2">
+            <div class="col-4"><input type="text" id="toko" class="form-control-custom w-100" placeholder="TOKO"></div>
+            <div class="col-8"><input type="text" id="pic" class="form-control-custom w-100" placeholder="NAMA PIC"></div>
         </div>
     </div>
 
     <div class="main-card">
-        <span class="input-label mb-3">Checklist Aktivitas</span>
         <div class="check-grid">
-            <label class="check-item">
-                <input type="checkbox" id="culling">
-                <div class="check-box"><i class="ph ph-trash"></i><span>CULLING</span></div>
-            </label>
-            <label class="check-item">
-                <input type="checkbox" id="trimming">
-                <div class="check-box"><i class="ph ph-scissors"></i><span>TRIMMING</span></div>
-            </label>
-            <label class="check-item">
-                <input type="checkbox" id="crisping">
-                <div class="check-box"><i class="ph ph-drop"></i><span>CRISPING</span></div>
-            </label>
+            <label class="check-item"><input type="checkbox" id="culling"><div class="check-box"><i class="ph ph-trash"></i><span>CULLING</span></div></label>
+            <label class="check-item"><input type="checkbox" id="trimming"><div class="check-box"><i class="ph ph-scissors"></i><span>TRIMMING</span></div></label>
+            <label class="check-item"><input type="checkbox" id="crisping"><div class="check-box"><i class="ph ph-drop"></i><span>CRISPING</span></div></label>
         </div>
     </div>
 
-    <div class="px-3">
-        <div class="row g-3">
-            <div class="col-6">
-                <span class="input-label ms-2">Visual Display</span>
-                <div class="photo-uploader" id="box-dis">
-                    <i class="ph ph-camera"></i>
-                    <span>AMBIL FOTO</span>
-                    <img id="p-dis">
-                </div>
-                <input type="file" id="in-dis" class="d-none" accept="image/*" capture="environment">
+    <div class="row g-2 px-3">
+        <div class="col-6">
+            <div class="photo-uploader" onclick="document.getElementById('in-dis').click()">
+                <i class="ph ph-camera"></i><span>DISPLAY</span><img id="p-dis">
             </div>
-            <div class="col-6">
-                <span class="input-label ms-2">Stock Repacking</span>
-                <div class="photo-uploader" id="box-rep">
-                    <i class="ph ph-package"></i>
-                    <span>AMBIL FOTO</span>
-                    <img id="p-rep">
-                </div>
-                <input type="file" id="in-rep" class="d-none" accept="image/*" capture="environment">
+            <input type="file" id="in-dis" class="d-none" accept="image/*" capture="environment">
+        </div>
+        <div class="col-6">
+            <div class="photo-uploader" onclick="document.getElementById('in-rep').click()">
+                <i class="ph ph-package"></i><span>REPACK</span><img id="p-rep">
             </div>
+            <input type="file" id="in-rep" class="d-none" accept="image/*" capture="environment">
         </div>
     </div>
 
-    <div class="btn-submit-container">
-        <button id="btn-submit" class="btn-submit" disabled>KIRIM LAPORAN</button>
-    </div>
-
+    <button id="btn-submit" class="btn-submit" disabled>KIRIM LAPORAN</button>
     <script src="app.js"></script>
 </body>
 </html>
