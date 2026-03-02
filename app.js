@@ -1,126 +1,132 @@
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoz-Nw43oPupfnTxDvE5CQ4lqzZNPGfssmvuNMxkTu6rJwONMKDx5dhbCQ-iBAX0n9/exec';
+/**
+ * KONFIGURASI: Ganti URL di bawah dengan URL Web App 
+ * yang Anda dapatkan setelah Deploy Google Apps Script.
+ */
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGPJq8V8dvxL5HRfrapqzP9CJPp63-h2tONbJsDfyoSB_iXnONCC2lXPERuyd2UDWK/exec';
 
-const state = {
-    displayBase64: null,
-    repackBase64: null,
-    markers: []
+// State untuk menyimpan data foto dalam format Base64
+let photos = {
+    dis: null, // Foto Display
+    rep: null  // Foto Repack
 };
 
-// Handle Input Display Foto
-document.getElementById('display-trigger').onclick = (e) => {
-    if (!state.displayBase64) document.getElementById('input-display').click();
-    else handleMarker(e);
-};
-
-document.getElementById('input-display').onchange = function() {
-    loadImage(this.files[0], 'display');
-};
-
-// Handle Input Repack Foto
-document.getElementById('repack-trigger').onclick = () => {
-    document.getElementById('input-repack').click();
-};
-
-document.getElementById('input-repack').onchange = function() {
-    loadImage(this.files[0], 'repack');
-};
-
-function loadImage(file, type) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        state[`${type}Base64`] = e.target.result;
-        document.getElementById(`${type}-placeholder`).style.display = 'none';
-        document.getElementById(`${type}-wrapper`).style.display = 'block';
-        document.getElementById(`${type}-img`).src = e.target.result;
-        updateProgress();
-    };
-    reader.readAsDataURL(file);
-}
-
-function handleMarker(e) {
-    const container = document.getElementById('display-trigger');
-    const rect = container.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    const marker = document.createElement('div');
-    marker.className = 'marker';
-    marker.style.left = x + '%';
-    marker.style.top = y + '%';
-    marker.innerHTML = '✕';
-    document.getElementById('display-wrapper').appendChild(marker);
-    state.markers.push({x, y});
-}
-
-function updateProgress() {
-    const isReady = document.getElementById('toko').value && 
-                    document.getElementById('pic').value && 
-                    state.displayBase64 && 
-                    state.repackBase64;
+/**
+ * Inisialisasi Event Listener saat dokumen siap
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    // Setup Handler untuk Foto Display
+    setupCameraHandler('in-dis', 'p-dis', 'dis');
     
-    document.getElementById('btn-submit').disabled = !isReady;
-    document.getElementById('fill-progress').style.width = isReady ? '100%' : '50%';
-}
+    // Setup Handler untuk Foto Repack
+    setupCameraHandler('in-rep', 'p-rep', 'rep');
 
-// Listen for inputs
-['toko', 'pic'].forEach(id => {
-    document.getElementById(id).oninput = updateProgress;
+    // Listener untuk validasi input teks (Kode Toko & Nama PIC)
+    document.getElementById('toko').addEventListener('input', checkValidation);
+    document.getElementById('pic').addEventListener('input', checkValidation);
+    
+    // Listener untuk tombol Kirim
+    document.getElementById('btn-submit').addEventListener('click', handleSubmit);
 });
 
-document.getElementById('btn-submit').onclick = async () => {
-    Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+/**
+ * Fungsi untuk menangani proses pengambilan foto
+ */
+function setupCameraHandler(inputId, previewId, key) {
+    const fileInput = document.getElementById(inputId);
+    const previewImg = document.getElementById(previewId);
 
-    // Gabungkan Foto Display dengan Markers
-    const finalDisplay = await processImageWithMarkers();
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
+        // Tampilkan loading sederhana pada area foto
+        Swal.showLoading();
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            // Simpan hasil base64 ke dalam object photos
+            photos[key] = event.target.result;
+            
+            // Tampilkan preview foto ke user
+            previewImg.src = event.target.result;
+            previewImg.style.display = 'block';
+            
+            Swal.close();
+            checkValidation(); // Cek apakah tombol kirim sudah bisa aktif
+        };
+        reader.readAsDataURL(file);
+    };
+}
+
+/**
+ * Fungsi Validasi: Memastikan semua kolom wajib diisi
+ */
+function checkValidation() {
+    const toko = document.getElementById('toko').value.trim();
+    const pic = document.getElementById('pic').value.trim();
+    const btn = document.getElementById('btn-submit');
+
+    // Syarat: Toko ada, PIC ada, Foto Display ada, Foto Repack ada
+    const isValid = toko !== "" && pic !== "" && photos.dis !== null && photos.rep !== null;
+
+    btn.disabled = !isValid;
+}
+
+/**
+ * Fungsi Kirim Data (Submit)
+ */
+async function handleSubmit() {
+    // Tampilkan animasi loading modern
+    Swal.fire({
+        title: 'Sedang Mengirim...',
+        text: 'Data dan Foto sedang diupload ke GDrive & GSheet',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Susun data yang akan dikirim ke Apps Script
     const payload = {
-        toko: document.getElementById('toko').value,
-        pic: document.getElementById('pic').value,
-        culling: document.getElementById('check-culling').checked,
-        trimming: document.getElementById('check-trimming').checked,
-        crisping: document.getElementById('check-crisping').checked,
-        foto_display: finalDisplay,
-        foto_repack: state.repackBase64,
-        catatan: document.getElementById('catatan').value,
-        jumlah_marker: state.markers.length
+        toko: document.getElementById('toko').value.toUpperCase(),
+        pic: document.getElementById('pic').value.toUpperCase(),
+        culling: document.getElementById('culling').checked,
+        trimming: document.getElementById('trimming').checked,
+        crisping: document.getElementById('crisping').checked,
+        foto_display: photos.dis,
+        foto_repack: photos.rep
     };
 
     try {
-        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-        Swal.fire('Sukses!', 'Laporan monitoring terkirim.', 'success').then(() => location.reload());
-    } catch (e) {
-        Swal.fire('Error', 'Gagal mengirim data.', 'error');
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Penting untuk menghindari isu CORS pada Apps Script
+            cache: 'no-cache',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        // Karena mode 'no-cors', kita tidak bisa membaca isi respon secara detail,
+        // Namun jika tidak masuk ke catch, biasanya pengiriman berhasil.
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: 'Laporan monitoring telah tersimpan.',
+            confirmButtonColor: '#000'
+        }).then(() => {
+            // Segarkan halaman agar form kembali kosong (Reset)
+            location.reload();
+        });
+
+    } catch (error) {
+        console.error('Error saat mengirim data:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal Terkirim',
+            text: 'Terjadi kesalahan saat menghubungi server. Pastikan URL SCRIPT sudah benar.',
+            confirmButtonColor: '#ED1C24'
+        });
     }
-};
-
-async function processImageWithMarkers() {
-    const canvas = document.getElementById('canvas-process');
-    const ctx = canvas.getContext('2d');
-    const img = document.getElementById('display-img');
-    
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    ctx.drawImage(img, 0, 0);
-
-    ctx.fillStyle = "#ED1C24";
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = canvas.width * 0.005;
-    const size = canvas.width * 0.03;
-
-    state.markers.forEach(m => {
-        const px = (m.x / 100) * canvas.width;
-        const py = (m.y / 100) * canvas.height;
-        ctx.beginPath();
-        ctx.arc(px, py, size, 0, Math.PI*2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = "white";
-        ctx.font = `bold ${size}px Arial`;
-        ctx.textAlign = "center";
-        ctx.fillText("X", px, py + (size/3));
-        ctx.fillStyle = "#ED1C24";
-    });
-
-    return canvas.toDataURL('image/jpeg', 0.7);
 }
