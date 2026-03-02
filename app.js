@@ -1,34 +1,34 @@
 /**
- * PENTING: Ganti URL di bawah dengan URL Deployment dari Google Apps Script
+ * JAVASCRIPT - LOGIC & UI INTERACTION
  */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGPJq8V8dvxL5HRfrapqzP9CJPp63-h2tONbJsDfyoSB_iXnONCC2lXPERuyd2UDWK/exec';
 
-const photos = {
-    dis: null,
-    rep: null
+// GANTI DENGAN URL WEB APP HASIL DEPLOY GOOGLE APPS SCRIPT
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzfRHnLr3Py8xNh4Dmr6tXx-v_HLciCtOWgfD0AEKHB2TfqiG5pPcuKVG4sCvt_Klng/exec';
+
+const state = {
+    foto_display: null,
+    foto_repack: null
 };
 
-// Inisialisasi Event Listener
 document.addEventListener('DOMContentLoaded', () => {
-    // Foto Display
+    // Event Click pada Box Kamera
     document.getElementById('box-dis').onclick = () => document.getElementById('in-dis').click();
-    setupImageHandler('in-dis', 'p-dis', 'dis');
-
-    // Foto Repack
     document.getElementById('box-rep').onclick = () => document.getElementById('in-rep').click();
-    setupImageHandler('in-rep', 'p-rep', 'rep');
 
-    // Input Identitas
-    document.getElementById('toko').oninput = validateForm;
-    document.getElementById('pic').oninput = validateForm;
+    // Event Handler Input Foto
+    setupImageHandler('in-dis', 'p-dis', 'foto_display');
+    setupImageHandler('in-rep', 'p-rep', 'foto_repack');
 
-    // Tombol Kirim
-    document.getElementById('btn-submit').onclick = submitData;
+    // Validasi Form saat input berubah
+    const inputs = ['toko', 'pic'];
+    inputs.forEach(id => {
+        document.getElementById(id).oninput = validateForm;
+    });
+
+    // Submit Action
+    document.getElementById('btn-submit').onclick = handleSubmit;
 });
 
-/**
- * Memproses file gambar dan mengoptimalkannya
- */
 function setupImageHandler(inputId, previewId, key) {
     const input = document.getElementById(inputId);
     const preview = document.getElementById(previewId);
@@ -39,12 +39,12 @@ function setupImageHandler(inputId, previewId, key) {
 
         const reader = new FileReader();
         reader.onload = (ev) => {
-            // Optimasi: Tampilkan preview terlebih dahulu
+            // Optimasi: Simpan data base64
+            state[key] = ev.target.result;
+            
+            // UI Update
             preview.src = ev.target.result;
             preview.style.display = 'block';
-            
-            // Simpan ke state
-            photos[key] = ev.target.result;
             
             validateForm();
         };
@@ -52,41 +52,38 @@ function setupImageHandler(inputId, previewId, key) {
     };
 }
 
-/**
- * Validasi agar tombol kirim hanya aktif jika semua data terisi
- */
 function validateForm() {
     const toko = document.getElementById('toko').value.trim();
     const pic = document.getElementById('pic').value.trim();
     const btn = document.getElementById('btn-submit');
 
-    const isComplete = toko !== "" && pic !== "" && photos.dis !== null && photos.rep !== null;
-    btn.disabled = !isComplete;
+    // Aktif jika Identitas & Kedua Foto terisi
+    const isValid = toko && pic && state.foto_display && state.foto_repack;
+    btn.disabled = !isValid;
 }
 
-/**
- * Mengirim data ke Google Apps Script
- */
-async function submitData() {
+async function handleSubmit() {
+    const btn = document.getElementById('btn-submit');
+    
     Swal.fire({
         title: 'Mengirim Laporan...',
-        text: 'Sedang mengunggah data dan foto ke sistem.',
+        text: 'Mohon tunggu sejenak',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
 
     const payload = {
-        toko: document.getElementById('toko').value.trim().toUpperCase(),
-        pic: document.getElementById('pic').value.trim().toUpperCase(),
+        toko: document.getElementById('toko').value,
+        pic: document.getElementById('pic').value,
         culling: document.getElementById('culling').checked,
         trimming: document.getElementById('trimming').checked,
         crisping: document.getElementById('crisping').checked,
-        foto_display: photos.dis,
-        foto_repack: photos.rep
+        foto_display: state.foto_display,
+        foto_repack: state.foto_repack
     };
 
     try {
-        const response = await fetch(SCRIPT_URL, {
+        const response = await fetch(WEB_APP_URL, {
             method: 'POST',
             body: JSON.stringify(payload)
         });
@@ -96,20 +93,20 @@ async function submitData() {
         if (result.status === 'success') {
             Swal.fire({
                 icon: 'success',
-                title: 'Terkirim!',
-                text: 'Data monitoring berhasil disimpan.',
-                confirmButtonColor: '#000'
+                title: 'Berhasil!',
+                text: 'Laporan telah disimpan di Google Sheets.',
+                confirmButtonColor: '#1C1C1E'
             }).then(() => location.reload());
         } else {
             throw new Error(result.message);
         }
     } catch (err) {
-        console.error(err);
         Swal.fire({
             icon: 'error',
             title: 'Gagal Mengirim',
-            text: 'Terjadi kesalahan. Pastikan URL Script benar dan internet aktif.',
+            text: 'Cek koneksi internet atau URL Deployment Anda.',
             confirmButtonColor: '#ED1C24'
         });
+        console.error(err);
     }
 }
