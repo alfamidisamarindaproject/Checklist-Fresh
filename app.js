@@ -1,37 +1,23 @@
+// GANTI DENGAN URL /exec HASIL DEPLOY TERBARU
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-N3Kxo1Ny17gVlDGQS6RgixQT_1__TMWChImePZ-imjEBDrBMxPHfNEBGAF2K2Hb9/exec'; 
+
+const photos = { dis: null, rep: null };
+
 /**
- * APP LOGIC - FRESH MONITORING
- * Fitur: Client-side Image Compression & CORS Handling
+ * Kompresi Gambar: Mengubah foto besar menjadi max 800px 
+ * agar proses upload cepat & tidak timeout.
  */
-
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzWzUA6vsOw26i_eZHK4Uyx1eJ9SiF4FjuY5Yo9V3FHZjAUkE-xf-6CXgQrXdK3A-zz/exec'; // Ganti dengan URL /exec Anda
-const state = { foto_display: null, foto_repack: null };
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Setup Camera Click
-    document.getElementById('box-dis').onclick = () => document.getElementById('in-dis').click();
-    document.getElementById('box-rep').onclick = () => document.getElementById('in-rep').click();
-
-    // Setup Image Handlers
-    handleImage('in-dis', 'p-dis', 'foto_display');
-    handleImage('in-rep', 'p-rep', 'foto_repack');
-
-    // Setup Validation
-    ['toko', 'pic'].forEach(id => document.getElementById(id).oninput = validate);
-    document.getElementById('btn-submit').onclick = sendData;
-});
-
-function handleImage(inputId, previewId, key) {
+function handleFile(inputId, previewId, key) {
     document.getElementById(inputId).onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (ev) => {
+        reader.onload = (event) => {
             const img = new Image();
             img.onload = () => {
-                // FITUR KOMPRESI: Resize ke lebar maksimal 1024px
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 1024;
+                const MAX_WIDTH = 800;
                 let width = img.width;
                 let height = img.height;
 
@@ -39,64 +25,68 @@ function handleImage(inputId, previewId, key) {
                     height *= MAX_WIDTH / width;
                     width = MAX_WIDTH;
                 }
-
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-
-                // Kualitas 0.7 (70%) sangat cukup untuk dokumentasi, ukuran file jadi sangat kecil
-                const compressedData = canvas.toDataURL('image/jpeg', 0.7);
-                state[key] = compressedData;
+                
+                const base64 = canvas.toDataURL('image/jpeg', 0.7);
+                photos[key] = base64;
                 
                 const preview = document.getElementById(previewId);
-                preview.src = compressedData;
+                preview.src = base64;
                 preview.style.display = 'block';
                 validate();
             };
-            img.src = ev.target.result;
+            img.src = event.target.result;
         };
         reader.readAsDataURL(file);
     };
 }
 
+handleFile('in-dis', 'p-dis', 'dis');
+handleFile('in-rep', 'p-rep', 'rep');
+
 function validate() {
-    const isReady = document.getElementById('toko').value && 
-                    document.getElementById('pic').value && 
-                    state.foto_display && state.foto_repack;
-    document.getElementById('btn-submit').disabled = !isReady;
+    const isOk = document.getElementById('toko').value && 
+                 document.getElementById('pic').value && 
+                 photos.dis && photos.rep;
+    document.getElementById('btn-submit').disabled = !isOk;
 }
 
-async function sendData() {
-    Swal.fire({ title: 'Mengunggah Data...', text: 'Foto sedang dikompresi & dikirim', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+document.getElementById('toko').oninput = validate;
+document.getElementById('pic').oninput = validate;
+
+document.getElementById('btn-submit').onclick = async () => {
+    Swal.fire({ title: 'Mengirim...', text: 'Mengompresi & Mengunggah', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     const payload = {
-        toko: document.getElementById('toko').value.toUpperCase(),
+        toko: document.getElementById('toko').value,
         pic: document.getElementById('pic').value,
         culling: document.getElementById('culling').checked,
         trimming: document.getElementById('trimming').checked,
         crisping: document.getElementById('crisping').checked,
-        foto_display: state.foto_display,
-        foto_repack: state.foto_repack
+        foto_display: photos.dis,
+        foto_repack: photos.rep
     };
 
     try {
-        const response = await fetch(WEB_APP_URL, {
+        // MENGGUNAKAN METODE TEXT/PLAIN UNTUK BYPASS CORS
+        const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors', // Menghindari CORS issues pada beberapa domain
-            headers: { 'Content-Type': 'application/json' },
+            mode: 'no-cors', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify(payload)
         });
 
-        // Karena mode 'no-cors', kita beri delay sedikit lalu anggap sukses 
-        // jika tidak masuk ke catch block
+        // Karena mode 'no-cors' tidak bisa membaca response, 
+        // kita beri delay 2 detik lalu anggap sukses
         setTimeout(() => {
-            Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Laporan telah masuk ke sistem.', confirmButtonColor: '#1C1C1E' })
-                .then(() => location.reload());
-        }, 1500);
+            Swal.fire('Berhasil!', 'Data tersimpan di GSheet.', 'success').then(() => location.reload());
+        }, 2000);
 
     } catch (err) {
-        Swal.fire('Gagal!', 'Terjadi kesalahan pengiriman. Cek koneksi.', 'error');
+        Swal.fire('Gagal!', 'Cek koneksi internet.', 'error');
         console.error(err);
     }
-}
+};
